@@ -1,0 +1,30 @@
+$Conf{RsyncShareName} = [
+  '/root',
+  '/etc',
+  '/home',
+  '/usr',
+  '/var'
+];
+
+$Conf{BackupFilesExclude} = {
+  '*' => [
+    '/cgroup',
+    '/data',
+    '/dev',
+    '/lost+found',
+    '/misc',
+    '/mnt',
+    '/net',
+    '/proc',
+    '/selinux',
+    '/sys',
+    '/tmp',
+    '/var/tmp',
+    '/var/cache/yum'
+  ]
+};
+$Conf{ClientNameAlias} = [
+  '{{ item.shortname }}',
+  '{{ item.hostname }}',
+];
+$Conf{PingMaxMsec} = 1000;

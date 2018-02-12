@@ -1,0 +1,45 @@
+#
+# {{ ansible_managed }}
+#
+
+{% if item.include_files is defined %}
+$Conf{BackupFilesOnly} = {
+  '*' => [
+{% for item in item.include_files %}
+    '{{ item }}'{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  ]
+};
+{% endif %}
+
+{% if item.exclude_files is defined %}
+$Conf{BackupFilesExclude} = {
+  '*' => [
+{% for item in item.exclude_files %}
+    '{{ item }}'{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  ]
+};
+{% endif %}
+
+$Conf{XferMethod} = '{{ item.xfermethod | default("rsync") }}';
+
+$Conf{ClientCharsetLegacy} = 'utf-8';
+
+{% if item.more is defined %}
+# More options...
+{% for key, value in item.more.iteritems() %}
+{% if value is string %}
+$Conf{{ '{' }}{{ key }}{{ '}' }} = '{{ value }}';
+{% else %}
+$Conf{{ '{' }}{{ key }}{{ '}' }} = [
+  {% for i in value %}'{{ i }}'{% if not loop.last %}, {% endif %}
+{% endfor %}
+
+];
+
+{% endif %}
+{% endfor %}
+{% endif %}

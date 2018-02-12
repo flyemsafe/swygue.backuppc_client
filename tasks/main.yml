@@ -1,0 +1,44 @@
+---
+# tasks file for swygue-backuppc
+
+- name: ensure rsync and libselinux-python is installed
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - rsync
+    - libselinux-python
+  when: backuppc_client or backuppc_server
+
+- name: create backuppc group
+  group:
+    name: "{{ backuppc_group }}"
+    gid: "{{ backuppc_gid }}"
+    state: present
+  when: backuppc_client or backuppc_server
+
+- name: create backuppc user
+  user:
+    name: "{{ backuppc_user }}"
+    comment: "{{ backuppc_user_comment }}"
+    uid: "{{ backuppc_uid }}"
+    group: "{{ backuppc_group }}"
+    shell: "{{ backuppc_shell }}"
+    generate_ssh_key: "{{ generate_ssh_key }}"
+    ssh_key_comment: "{{ backuppc_ssh_key_comment }}"
+    createhome: yes
+    home: "{{ backuppc_home }}"
+    state: present
+  when: backuppc_client or backuppc_server
+
+- name: setup BackupPC server
+  include_tasks: server.yml
+  when: backuppc_server
+
+- name: setup client for rsync via ssh
+  include_tasks: client.yml
+  when: backuppc_client
+
+- name: add host to BackupPC server
+  include_tasks: add-client.yml
+  when: add_backuppc_client

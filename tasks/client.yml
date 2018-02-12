@@ -1,0 +1,14 @@
+---
+# tasks file for swygue-backuppc-client
+
+- name: install backuppc sudoers file
+  template:
+    src: backuppc_sudoers.j2
+    dest: /etc/sudoers.d/backuppc
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: add backuppc ssh authorized_keys
+  authorized_key:
+    user: "{{ backuppc_user }}"
+    key: "{{ lookup('file', ssh_pub_key_file) }}"
+    state: present
