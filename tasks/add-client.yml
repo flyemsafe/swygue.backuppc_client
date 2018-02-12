@@ -1,6 +1,17 @@
 ---
 # tasks file for swygue-backuppc-client
-# TODO: add a check to make this is this Backup Server and exit if it isn't
+
+- name: check for BackupPC server
+  package:
+    name: BackupPC
+    state: present
+  check_mode: true
+  register: is_installed
+
+- name: fail if this is not a BackupPC server
+  fail:
+    msg: "This system does not appear to be a BackupPC server. Please check your play host and try again."
+  when: is_installed.changed
 
 - name: ensure backup client shortname is in backuppc server known host
   lineinfile:
@@ -51,3 +62,4 @@
     state={{ item.state if item.state is defined else 'present' }}
   with_items: "{{ backuppc_hosts }}"
   notify: restart backuppc
+
