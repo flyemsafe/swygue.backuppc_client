@@ -24,7 +24,7 @@ $Conf{BackupFilesExclude} = {
   ]
 };
 $Conf{ClientNameAlias} = [
-  '{{ item.shortname }}',
   '{{ item.hostname }}',
+  '{{ item.alias }}',
 ];
 $Conf{PingMaxMsec} = 1000;

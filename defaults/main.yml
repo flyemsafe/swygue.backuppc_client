@@ -43,10 +43,10 @@ exclude_files:
 
 #backuppc_hosts:
 #  - hostname: host01.example.com
-#    shortname: host01
+#    alias: host01
 #    include_files: "{{ include_files }}"
 #    exclude_files: "{{ exclude_files }}"
 #    xfermethod: "{{ xfermethod }}"
 #    more: "{{ more }}"
 #  - hostname: 192.168.3.78
-#    shortname: host02
+#    alias: host02
