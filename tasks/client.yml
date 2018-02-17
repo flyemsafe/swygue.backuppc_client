@@ -9,6 +9,6 @@
 
 - name: add backuppc ssh authorized_keys
   authorized_key:
-    user: "{{ backuppc_user }}"
+    user: "{{ backuppc_client_user }}"
     key: "{{ lookup('file', ssh_pub_key_file) }}"
     state: present

@@ -6,6 +6,8 @@ backuppc_server: false        # Installs BackupPC server
 backuppc_client: false        # Setup BackupPC client
 add_backuppc_client: false    # Add client to BackupPC server
 
+backuppc_client_user: root
+
 # BackupPC User
 backuppc_uid:
 backuppc_gid:
