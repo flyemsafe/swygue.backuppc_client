@@ -8,37 +8,83 @@
   with_items:
     - rsync
     - libselinux-python
-  when: backuppc_client or backuppc_server
 
-- name: create backuppc group
-  group:
-    name: "{{ backuppc_group }}"
-    gid: "{{ backuppc_gid }}"
-    state: present
-  when: backuppc_client or backuppc_server
-
-- name: create backuppc user
+- name: remove backuppc user
   user:
     name: "{{ backuppc_user }}"
-    comment: "{{ backuppc_user_comment }}"
-    uid: "{{ backuppc_uid }}"
-    group: "{{ backuppc_group }}"
-    shell: "{{ backuppc_shell }}"
-    generate_ssh_key: "{{ generate_ssh_key }}"
-    ssh_key_comment: "{{ backuppc_ssh_key_comment }}"
-    createhome: yes
-    home: "{{ backuppc_home }}"
+    force: yes
+    remove: yes
+    state: absent
+
+- name: remove backuppc group
+  group:
+    name: "{{ backuppc_group }}"
+    state: absent
+
+- name: install backuppc sudoers file
+  file:
+    path: /etc/sudoers.d/backuppc
+    state: absent
+
+- name: add backuppc ssh authorized_keys
+  authorized_key:
+    user: "{{ backuppc_client_user }}"
+    key: "{{ lookup('file', backuppc_ssh_pub_key_file) }}"
     state: present
-  when: backuppc_client or backuppc_server
 
-- name: setup BackupPC server
-  include_tasks: server.yml
-  when: backuppc_server
+- name: ensure backup client alias is in backuppc server known host
+  lineinfile:
+    dest: /etc/ssh/ssh_known_hosts
+    state: present
+    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa {{ item.alias }}') }}"
+    regexp: "^{{ item.alias }}"
+    create: yes
+    group: root
+    owner: root
+    mode: u=rw,g=r,o=r
+  with_items: "{{ backuppc_hosts }}"
+  when: item.state is not defined or item.state == 'present' and item.alias is defined
+  tags: add-to-host
+  delegate_to: "{{ backuppc_server }}"
 
-- name: setup client for rsync via ssh
-  include_tasks: client.yml
-  when: backuppc_client
+- name: ensure backup client hostname is in backuppc server known host
+  lineinfile:
+    dest: /etc/ssh/ssh_known_hosts
+    state: present
+    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa {{ backuppc_hosts.hostname }}') }}"
+    regexp: "^{{ backuppc_hosts.hostname }}"
+    create: yes
+    group: root
+    owner: root
+    mode: u=rw,g=r,o=r
+  with_items: "{{ backuppc_hosts }}"
+  when: item.state is not defined or item.state == 'present' and backuppc_hosts.hostname is defined
+  tags: add-to-host
+  delegate_to: "{{ backuppc_server }}"
 
-- name: add host to BackupPC server
-  include_tasks: add-client.yml
-  when: add_backuppc_client
+- name: TEMPLATE | Put host specific config on BackupPC server
+  template:
+    src: "{{ backuppc_host_template|default('backuppc_host.pl.j2') }}"
+    dest: '/etc/BackupPC/pc/{{ item.alias }}.pl'
+    owner: backuppc
+    group: apache
+    mode: 0644
+  when: item.state is not defined or item.state == 'present'
+  with_items: "{{ backuppc_hosts }}"
+  notify: restart backuppc
+  delegate_to: "{{ backuppc_server }}"
+  register: is_host_template
+  until: is_host_template|succeeded
+  retries: 3
+  delay: 1
+  ignore_errors: yes
+
+- name: LINEINFILE | Add host to BackupPC server
+  lineinfile: >
+    dest=/etc/BackupPC/hosts
+    line="{{ item.alias }}\t0\tbackuppc"
+    regexp="^{{ item.alias }}"
+    state={{ item.state if item.state is defined else 'present' }}
+  with_items: "{{ backuppc_hosts }}"
+  delegate_to: "{{ backuppc_server }}"
+  register: is_config_updated

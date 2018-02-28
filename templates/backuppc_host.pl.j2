@@ -21,6 +21,7 @@ $Conf{BackupFilesExclude} = {
     '/tmp',
     '/var/tmp',
     '/var/cache/yum'
+    '/var/lib/libvirt/images'
   ]
 };
 $Conf{ClientNameAlias} = [
@@ -29,4 +30,7 @@ $Conf{ClientNameAlias} = [
 ];
 $Conf{PingMaxMsec} = 1000;
 $Conf{RsyncClientPath} = '/usr/bin/rsync';
-$Conf{BackupPCUser} = '{{ backuppc_client_user }}';
+$Conf{RsyncSshArgs} = [
+  '-e',
+  '$sshPath -l {{ backuppc_client_user }}'
+];

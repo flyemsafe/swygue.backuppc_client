@@ -3,6 +3,7 @@
 
 - name: restart backuppc
   service:
-    name: backuppc 
-    state: restarted 
+    name: backuppc
+    state: restarted
     enabled: yes
+  delegate_to: "{{ backuppc_server }}"
