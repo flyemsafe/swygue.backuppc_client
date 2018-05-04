@@ -9,32 +9,20 @@
     - rsync
     - libselinux-python
 
-- name: remove backuppc user
-  user:
-    name: "{{ backuppc_user }}"
-    force: yes
-    remove: yes
-    state: absent
-
-- name: remove backuppc group
-  group:
-    name: "{{ backuppc_group }}"
-    state: absent
-
-- name: install backuppc sudoers file
-  file:
-    path: /etc/sudoers.d/backuppc
-    state: absent
-
 - name: add backuppc ssh authorized_keys
   authorized_key:
     user: "{{ backuppc_client_user }}"
-    key: "{{ lookup('file', backuppc_ssh_pub_key_file) }}"
+    key: "{{ backuppc_ssh_key }}"
     state: present
+#TODO
+#test login with:
+#ssh -o "StrictHostKeyChecking=no" -o "BatchMode=yes" root@kvmzfs04.lab.rodhouse.net 'ps aux'
+#if failed: remove hostkey from known_host file
+
 
 - name: ensure backup client alias is in backuppc server known host
   lineinfile:
-    dest: /etc/ssh/ssh_known_hosts
+    dest: /var/lib/BackupPC/.ssh/known_hosts
     state: present
     line: "{{ lookup('pipe', 'ssh-keyscan -t rsa {{ item.alias }}') }}"
     regexp: "^{{ item.alias }}"
@@ -46,21 +34,24 @@
   when: item.state is not defined or item.state == 'present' and item.alias is defined
   tags: add-to-host
   delegate_to: "{{ backuppc_server }}"
+  run_once: true
 
-- name: ensure backup client hostname is in backuppc server known host
+- name: ensure backup client FQDN is in backuppc server known host
   lineinfile:
-    dest: /etc/ssh/ssh_known_hosts
+    dest: /var/lib/BackupPC/.ssh/known_hosts
     state: present
-    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa {{ backuppc_hosts.hostname }}') }}"
-    regexp: "^{{ backuppc_hosts.hostname }}"
+    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa {{ item.hostname }}') }}"
+    regexp: "^{{ item.hostname }}"
     create: yes
     group: root
     owner: root
     mode: u=rw,g=r,o=r
   with_items: "{{ backuppc_hosts }}"
-  when: item.state is not defined or item.state == 'present' and backuppc_hosts.hostname is defined
+  when: item.state is not defined or item.state == 'present' and item.alias is defined
   tags: add-to-host
   delegate_to: "{{ backuppc_server }}"
+  run_once: true
+
 
 - name: TEMPLATE | Put host specific config on BackupPC server
   template:
@@ -74,10 +65,11 @@
   notify: restart backuppc
   delegate_to: "{{ backuppc_server }}"
   register: is_host_template
-  until: is_host_template|succeeded
+  until: is_host_template is succeeded
   retries: 3
   delay: 1
   ignore_errors: yes
+  run_once: true
 
 - name: LINEINFILE | Add host to BackupPC server
   lineinfile: >
@@ -88,3 +80,8 @@
   with_items: "{{ backuppc_hosts }}"
   delegate_to: "{{ backuppc_server }}"
   register: is_config_updated
+  until: is_config_updated is succeeded
+  retries: 3
+  delay: 1
+  ignore_errors: yes
+  run_once: true
