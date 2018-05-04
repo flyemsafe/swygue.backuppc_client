@@ -16,30 +16,42 @@ do
 done
 
 
+FILE=~/.ssh/known_hosts
+
+OIFS=$IFS
 IFS=','
-STAT_FILE=$(mktemp)
 for host in $HOSTS;
 do
-    ssh -o "StrictHostKeyChecking=no" -o "BatchMode=yes" root@${host} 'ps aux >/dev/null 2>&1'
-    if [ "$?" != "0" ]; then
-      echo "$host" >> $STAT_FILE
-      echo "removing $host ssh key frown known"
-      ssh-keygen -R $host >/dev/null 2>&1
-      ssh-keyscan -t rsa,dsa,ecdsa,ed25519 $host >/dev/null 2>&1
+    KEY=$(ssh -o StrictHostKeyChecking=yes -o "BatchMode=yes" $USER@$host 'exit' 2>&1 | grep "Offending" | cut -d: -f2 |  tr -d "\r" | sort -nr | xargs echo)
+
+    if [ "A${KEY}" != "A" ];
+    then
+         IFS=$OIFS
+         for i in $(echo $KEY);
+         do
+            echo "Deleting $host offending key"
+            sed -i "${i}d" $FILE
+            OFFEND=UPDATED
+         done
+         IFS=','
+    fi
+
+    # This will add host-key if it's missing
+    ADD_KEY=$(ssh -o StrictHostKeyChecking=no -o "BatchMode=yes" $USER@$host 'exit' 2>&1 | grep 'Permanently added'|awk '{print $2}')
+
+    if [ "${ADD_KEY}" == "Permanently" ];
+    then
+         ADDED=UPDATED
+    fi
       
-    fi
 done
 
-for host in $HOSTS;
-do
-    grep $host $STAT_FILE 
-    if [ "$?" == "0" ]; then
-      STDOUT=UPDATED
-    else
-      STDOUT=NOCHANGE
-    fi
-done
-
-echo $STDOUT
+# Return STDOUT
+if [ "$ADDED" == "UPDATED" ] || [ "$OFFEND" == "UPDATED" ];
+then
+     echo UPDATED
+else
+     echo NOCHANGE
+fi
 
 exit 0

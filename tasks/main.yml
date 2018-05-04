@@ -22,11 +22,17 @@
     mode: u+rwx,g+rx,o+rx
     owner: root
     group: root
+  delegate_to: "{{ backuppc_server }}"
 
 - name: ensure backup client is in backuppc server known host
-  script: "/usr/local/bin/add-known-host -u root -h {{ item.alias }},{{ item.hostname }}"
+  #script: "/usr/local/bin/add-known-host -u root -h {{ item.alias }},{{ item.hostname }}"
+  command: "/usr/local/bin/add-known-host -u root -h {{ item.alias }},{{ item.hostname }}"
+  delegate_to: "{{ backuppc_server }}"
   register: is_known_host
-  changed_when: is_known_host.stdout == 'UPDATED'
+  become: yes
+  become_user: backuppc
+  with_items: "{{ backuppc_hosts }}"
+  changed_when: is_known_host.stdout == "UPDATED"
 
 - name: TEMPLATE | Put host specific config on BackupPC server
   template:
