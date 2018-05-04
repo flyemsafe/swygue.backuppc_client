@@ -14,44 +14,19 @@
     user: "{{ backuppc_client_user }}"
     key: "{{ backuppc_ssh_key }}"
     state: present
-#TODO
-#test login with:
-#ssh -o "StrictHostKeyChecking=no" -o "BatchMode=yes" root@kvmzfs04.lab.rodhouse.net 'ps aux'
-#if failed: remove hostkey from known_host file
 
-
-- name: ensure backup client alias is in backuppc server known host
-  lineinfile:
-    dest: /var/lib/BackupPC/.ssh/known_hosts
-    state: present
-    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa {{ item.alias }}') }}"
-    regexp: "^{{ item.alias }}"
-    create: yes
-    group: root
+- name: ensure /usr/local/bin/add-known-host exists
+  copy:
+    src: add-known-host
+    dest: /usr/local/bin/add-known-host
+    mode: u+rwx,g+rx,o+rx
     owner: root
-    mode: u=rw,g=r,o=r
-  with_items: "{{ backuppc_hosts }}"
-  when: item.state is not defined or item.state == 'present' and item.alias is defined
-  tags: add-to-host
-  delegate_to: "{{ backuppc_server }}"
-  run_once: true
-
-- name: ensure backup client FQDN is in backuppc server known host
-  lineinfile:
-    dest: /var/lib/BackupPC/.ssh/known_hosts
-    state: present
-    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa {{ item.hostname }}') }}"
-    regexp: "^{{ item.hostname }}"
-    create: yes
     group: root
-    owner: root
-    mode: u=rw,g=r,o=r
-  with_items: "{{ backuppc_hosts }}"
-  when: item.state is not defined or item.state == 'present' and item.alias is defined
-  tags: add-to-host
-  delegate_to: "{{ backuppc_server }}"
-  run_once: true
 
+- name: ensure backup client is in backuppc server known host
+  script: "/usr/local/bin/add-known-host -u root -h {{ item.alias }},{{ item.hostname }}"
+  register: is_known_host
+  changed_when: is_known_host.stdout == 'UPDATED'
 
 - name: TEMPLATE | Put host specific config on BackupPC server
   template:

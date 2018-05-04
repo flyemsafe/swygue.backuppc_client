@@ -1,0 +1,45 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]
+then
+  echo "Usage: $0 -h -u"
+  echo "-h host or command separated list of hosts"
+  echo "-u ssh user"
+fi
+
+while getopts h:u: opt
+do
+  case $opt in 
+    h) HOSTS=$OPTARG;;
+    u) USER=$OPTARG;;
+  esac
+done
+
+
+IFS=','
+STAT_FILE=$(mktemp)
+for host in $HOSTS;
+do
+    ssh -o "StrictHostKeyChecking=no" -o "BatchMode=yes" root@${host} 'ps aux >/dev/null 2>&1'
+    if [ "$?" != "0" ]; then
+      echo "$host" >> $STAT_FILE
+      echo "removing $host ssh key frown known"
+      ssh-keygen -R $host >/dev/null 2>&1
+      ssh-keyscan -t rsa,dsa,ecdsa,ed25519 $host >/dev/null 2>&1
+      
+    fi
+done
+
+for host in $HOSTS;
+do
+    grep $host $STAT_FILE 
+    if [ "$?" == "0" ]; then
+      STDOUT=UPDATED
+    else
+      STDOUT=NOCHANGE
+    fi
+done
+
+echo $STDOUT
+
+exit 0
