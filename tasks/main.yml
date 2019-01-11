@@ -13,15 +13,90 @@
   wait_for:
     host: "{{ backuppc_server }}"
     port: 22
-    state: started
-    timeout: 1
+    timeout: 10
   register: backup_host_status
   ignore_errors: yes
-  connection:
 
-- debug: msg="{{ backuppc_server }} is not available"
+- name: report backuppc server is not availble
+  debug: 
+    msg: "{{ backuppc_server }} is not available"
   when: backup_host_status.failed
 
-- name: add host to BackupPC server
-  include_tasks: add.yml
-  when: not backup_host_status.failed
+- name: add backuppc ssh authorized_keys to backup client user
+  authorized_key:
+    user: "{{ backuppc_client_user }}"
+    key: "{{ backuppc_ssh_key }}"
+    state: present
+
+- name: ensure the script /usr/local/bin/add-known-host exists
+  copy:
+    src: add-known-host
+    dest: /usr/local/bin/add-known-host
+    mode: u+rwx,g+rx,o+rx
+    owner: root
+    group: root
+  delegate_to: "{{ backuppc_server }}"
+
+- name: ensure backup client is in backuppc server known host
+  #script: "/usr/local/bin/add-known-host -u root -h {{ item.alias }},{{ item.hostname }}"
+  command: "/usr/local/bin/add-known-host -u root -h {{ item.alias }},{{ item.hostname }}"
+  delegate_to: "{{ backuppc_server }}"
+  register: is_known_host
+  become: yes
+  become_user: "{{ backuppc_server_user }}"
+  become_method: su
+  with_items: "{{ backuppc_hosts }}"
+  changed_when: is_known_host.stdout == "UPDATED"
+
+- name: TEMPLATE | Put host specific config on BackupPC server
+  template:
+    #src: "{{ backuppc_host_template|default('backuppc_host.pl.j2') }}"
+    src: "backuppc_host.pl.j2"
+    dest: '/etc/BackupPC/pc/{{ item.alias }}.pl'
+    owner: "{{ backuppc_server_user }}"
+    group: apache
+    mode: 0644
+  when: item.state is not defined or item.state == 'present'
+  with_items: "{{ backuppc_hosts }}"
+  delegate_to: "{{ backuppc_server }}"
+  register: is_host_template
+  until: is_host_template is succeeded
+  retries: 3
+  delay: 1
+  ignore_errors: yes
+  run_once: true
+
+- name: LINEINFILE | Add host to BackupPC server
+  lineinfile:
+    path: /etc/BackupPC/hosts
+    line: "{{ item.alias }}\t0\tbackuppc"
+    regexp: "^{{ item.alias }}"
+    state: "{{ item.state if item.state is defined else present }}"
+  with_items: "{{ backuppc_hosts }}"
+  delegate_to: "{{ backuppc_server }}"
+  register: is_config_updated
+  until: is_config_updated is succeeded
+  retries: 3
+  delay: 1
+  ignore_errors: yes
+  run_once: true
+
+- name: show lineinfile status
+  command: systemctl restart backuppc.service
+  args:
+    warn: no
+  when: is_config_updated.changed or is_host_template.changed
+  delegate_to: "{{ backuppc_server }}"
+
+- name: run a backup job to test client setup
+  command: "{{ backuppc_test_command }} {{ item.alias }}:/root/ /"
+  args:
+    warn: no
+  #when: is_config_updated.changed or is_host_template.changed
+  become: yes
+  become_user: "{{ backuppc_server_user }}"
+  become_method: su
+  with_items: "{{ backuppc_hosts }}"
+  delegate_to: "{{ backuppc_server }}"
+  register: backup_run
+  changed_when: "'something' in backup_run.stdout" #this should never be true

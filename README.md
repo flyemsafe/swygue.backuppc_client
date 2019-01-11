@@ -1,29 +1,36 @@
 swygue-backuppc
 ===============
 
-- Installs BackupPC Server.
-- Setup a host to be a BackupPC client.
-- Add the host to the BackupPC Server hosts file.
+The role setup on a linux host to be as a BackupPC client.
 
 Requirements
 ------------
 
 The role most likely only works on RHEL based systems.
 
-- BackupPC Server user ssh public key is needs for clients authorized_keys file.
+- The SSH keys for the backuppc server user.
 
 Role Variables
 --------------
 
-### Installation Types
+```
+backuppc_server:                 #FQDN or IP of the backuppc server
+backuppc_ssh_key:                #SSH key of the backuppc user
+backuppc_client_user: root       #This is the user backuppc connects to the client as
+backup_schedule_status: enabled  #Set to disabled to not run backups on this client
+backuppc_server_user: backuppc   #The user BackupPC runs as
 
-**backuppc_server: false**
+backuppc_hosts:
+  - hostname:                    #FQDN of backup client
+    alias:                       #Client display name in backuppc ui
+    state: present               #set to absent to remove the host from backup
+```
 
-Setting this to true will install the BackupPC server.
- - Creates BackupPC user.
- - Optional: Generates ssh-keys.
- - Installs and configure Apache.
- - Installs and configure BackupPC server from RPM.
+This is for running a test backup of the client. You can modify the excludes or any of the command agruments to suite your needs.
+
+```
+backuppc_test_command: /usr/bin/rsync_bpc --bpc-top-dir /var/lib/BackupPC --bpc-host-name cetewaygo --bpc-share-name /root --bpc-bkup-num 0 --bpc-bkup-comp 3 --bpc-bkup-prevnum -1 --bpc-bkup-prevcomp -1 --bpc-bkup-inode0 2 --bpc-attrib-new --bpc-log-level 1 -e /usr/bin/ssh\ -l\ root --rsync-path=/usr/bin/rsync --super --recursive --protect-args --numeric-ids --perms --owner --group -D --times --links --hard-links --delete --delete-excluded --one-file-system --partial --log-format=log:\ %o\ %i\ %B\ %8U,%8G\ %9l\ %f%L --stats --checksum --timeout=72000 --exclude=/cgroup --exclude=/data --exclude=/dev --exclude=/lost+found --exclude=/misc --exclude=/mnt --exclude=/net --exclude=/proc --exclude=/selinux --exclude=/sys --exclude=/tmp --exclude=/var/tmp --exclude=/var/cache/yum --exclude=/var/lib/libvirt/images --exclude=/var/lib/mongodb/ --exclude=/var/lib/pgsql --exclude=/var/lib/pulp/
+```
 
 **backuppc_client: false**
 

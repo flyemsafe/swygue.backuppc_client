@@ -1,54 +1,15 @@
 ---
 # defaults file for swygue-backuppc-client
 
-# Installation Types
-backuppc_server: false        # Installs BackupPC server
-backuppc_client: false        # Setup BackupPC client
-add_backuppc_client: false    # Add client to BackupPC server
-
+backuppc_server:
+backuppc_ssh_key:
 backuppc_client_user: root
+backup_schedule_status: enabled
+backuppc_server_user: backuppc
 
-# BackupPC User
-backuppc_uid:
-backuppc_gid:
-backuppc_ssh_key_comment: "BackupPC Server"
-backuppc_user: backuppc
-backuppc_group: backuppc
-backuppc_user_comment: 'BackupPC User'
-backuppc_home: /var/lib/BackupPC
+backuppc_hosts:
+  - hostname: 
+    alias: 
+    state: present
 
-# This needs to a valid shell when setting up client
-backuppc_shell: /sbin/nologin
-
-# change this to yes to generate ssh keys for BackupPC user
-generate_ssh_key: yes
-
-# set this to the BackupPC server public key. required for setting up clients
-ssh_pub_key_file:
-
-# Client Configuration
-xfermethod: rsync
-
-# hash with specific key/value (usefull for custom directives)
-#more:
-
-# default files (directories) list to backup
-include_files:
-  - /root
-  - /etc
-
-# default files (directories) list to exclude in backup
-exclude_files:
-  - /cgroup
-  - /data
-  - /lost+found
-
-#backuppc_hosts:
-#  - hostname: host01.example.com
-#    alias: host01
-#    include_files: "{{ include_files }}"
-#    exclude_files: "{{ exclude_files }}"
-#    xfermethod: "{{ xfermethod }}"
-#    more: "{{ more }}"
-#  - hostname: 192.168.3.78
-#    alias: host02
+backuppc_test_command: /usr/bin/rsync_bpc --bpc-top-dir /var/lib/BackupPC --bpc-host-name cetewaygo --bpc-share-name /root --bpc-bkup-num 0 --bpc-bkup-comp 3 --bpc-bkup-prevnum -1 --bpc-bkup-prevcomp -1 --bpc-bkup-inode0 2 --bpc-attrib-new --bpc-log-level 1 -e /usr/bin/ssh\ -l\ root --rsync-path=/usr/bin/rsync --super --recursive --protect-args --numeric-ids --perms --owner --group -D --times --links --hard-links --delete --delete-excluded --one-file-system --partial --log-format=log:\ %o\ %i\ %B\ %8U,%8G\ %9l\ %f%L --stats --checksum --timeout=72000 --exclude=/cgroup --exclude=/data --exclude=/dev --exclude=/lost+found --exclude=/misc --exclude=/mnt --exclude=/net --exclude=/proc --exclude=/selinux --exclude=/sys --exclude=/tmp --exclude=/var/tmp --exclude=/var/cache/yum --exclude=/var/lib/libvirt/images --exclude=/var/lib/mongodb/ --exclude=/var/lib/pgsql --exclude=/var/lib/pulp/

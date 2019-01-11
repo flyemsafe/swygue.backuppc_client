@@ -1,3 +1,4 @@
+# {{ ansible_managed }}
 $Conf{RsyncShareName} = [
   '/root',
   '/etc',
@@ -21,13 +22,17 @@ $Conf{BackupFilesExclude} = {
     '/tmp',
     '/var/tmp',
     '/var/cache/yum',
-    '/var/lib/libvirt/images'
+    '/var/lib/libvirt/images',
+    '/var/lib/mongodb/',
+    '/var/lib/pgsql',
+    '/var/lib/pulp/'
   ]
 };
 $Conf{ClientNameAlias} = [
   '{{ item.hostname }}',
   '{{ item.alias }}',
 ];
+{{ '$Conf{BackupsDisable} = 2;' if backup_schedule_status == 'disabled' else '$Conf{BackupsDisable} = 0;' }}
 $Conf{PingMaxMsec} = 1000;
 $Conf{RsyncClientPath} = '/usr/bin/rsync';
 $Conf{RsyncSshArgs} = [
