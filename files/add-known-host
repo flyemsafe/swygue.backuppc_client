@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script removes offending client host keys from the BackupPC server. 
+# I couldn't figure out how accomplish this with Ansible with the time I have to deveote to this.
+
 if [ $# -lt 2 ]
 then
   echo "Usage: $0 -h -u"

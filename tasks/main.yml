@@ -9,18 +9,19 @@
     - rsync
     - libselinux-python
 
-- name: is backup host available
-  wait_for:
-    host: "{{ backuppc_server }}"
-    port: 22
-    timeout: 10
-  register: backup_host_status
-  ignore_errors: yes
+#TODO: verify BackupPC Server is available and failed play if it isn't
+#- name: is backup host available
+#  wait_for:
+#    host: "{{ backuppc_server }}"
+#    port: 22
+#    timeout: 10
+#  register: backup_host_status
+#  ignore_errors: yes
 
-- name: report backuppc server is not availble
-  debug: 
-    msg: "{{ backuppc_server }} is not available"
-  when: backup_host_status.failed
+#- name: report backuppc server is not availble
+#  debug: 
+#    msg: "{{ backuppc_server }} is not available"
+#  when: backup_host_status.failed
 
 - name: add backuppc ssh authorized_keys to backup client user
   authorized_key:
