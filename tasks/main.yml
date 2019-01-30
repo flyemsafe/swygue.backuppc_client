@@ -38,7 +38,6 @@
   delegate_to: "{{ backuppc_server }}"
 
 - name: ensure backup client is in backuppc server known host
-  #script: "/usr/local/bin/add-known-host -u root -h {{ item.alias }},{{ item.hostname }}"
   command: "/usr/local/bin/add-known-host -u root -h {{ item.alias }},{{ item.hostname }}"
   delegate_to: "{{ backuppc_server }}"
   register: is_known_host
