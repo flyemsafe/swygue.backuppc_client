@@ -1,8 +1,8 @@
 ---
-# defaults file for swygue-backuppc-client
+# defaults file for swygue.backuppc_client
 
 backuppc_server:
-backuppc_ssh_key:
+backuppc_server_ssh_key:
 backuppc_client_user: root
 backup_schedule_status: enabled
 backuppc_server_user: backuppc
@@ -12,4 +12,4 @@ backuppc_hosts:
     alias: 
     state: present
 
-backuppc_test_command: /usr/bin/rsync_bpc --bpc-top-dir /var/lib/BackupPC --bpc-host-name cetewaygo --bpc-share-name /root --bpc-bkup-num 0 --bpc-bkup-comp 3 --bpc-bkup-prevnum -1 --bpc-bkup-prevcomp -1 --bpc-bkup-inode0 2 --bpc-attrib-new --bpc-log-level 1 -e /usr/bin/ssh\ -l\ root --rsync-path=/usr/bin/rsync --super --recursive --protect-args --numeric-ids --perms --owner --group -D --times --links --hard-links --delete --delete-excluded --one-file-system --partial --log-format=log:\ %o\ %i\ %B\ %8U,%8G\ %9l\ %f%L --stats --checksum --timeout=72000 --exclude=/cgroup --exclude=/data --exclude=/dev --exclude=/lost+found --exclude=/misc --exclude=/mnt --exclude=/net --exclude=/proc --exclude=/selinux --exclude=/sys --exclude=/tmp --exclude=/var/tmp --exclude=/var/cache/yum --exclude=/var/lib/libvirt/images --exclude=/var/lib/mongodb/ --exclude=/var/lib/pgsql --exclude=/var/lib/pulp/
+backuppc_test_command: /usr/bin/rsync_bpc --bpc-top-dir /var/lib/BackupPC --bpc-host-name cetewaygo --bpc-share-name /root --bpc-bkup-num 0 --bpc-bkup-comp 3 --bpc-bkup-prevnum -1 --bpc-bkup-prevcomp -1 --bpc-bkup-inode0 2 --bpc-attrib-new --bpc-log-level 1 -e /usr/bin/ssh\ -l\ root --rsync-path=/usr/bin/rsync --super --recursive --protect-args --numeric-ids --perms --owner --group -D --times --links --hard-links --delete --delete-excluded --one-file-system --partial --log-format=log:\ %o\ %i\ %B\ %8U,%8G\ %9l\ %f%L --stats --checksum --timeout=72000 --exclude=/cgroup --exclude=/dev --exclude=/lost+found --exclude=/misc --exclude=/mnt --exclude=/net --exclude=/proc --exclude=/selinux --exclude=/sys --exclude=/tmp --exclude=/var/tmp --exclude=/var/cache/yum --exclude=/var/lib/libvirt/images

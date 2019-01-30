@@ -1,5 +1,5 @@
 ---
-# tasks file for swygue-backuppc
+# tasks file for swygue.backuppc_client
 
 - name: ensure rsync and libselinux-python is installed
   package:
@@ -25,7 +25,7 @@
 - name: add backuppc ssh authorized_keys to backup client user
   authorized_key:
     user: "{{ backuppc_client_user }}"
-    key: "{{ backuppc_ssh_key }}"
+    key: "{{ backuppc_server_ssh_key }}"
     state: present
 
 - name: ensure the script /usr/local/bin/add-known-host exists

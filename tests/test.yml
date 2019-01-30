@@ -2,4 +2,4 @@
 - hosts: localhost
   remote_user: root
   roles:
-    - swygue-backuppc-client
+    - swygue.backuppc_client
